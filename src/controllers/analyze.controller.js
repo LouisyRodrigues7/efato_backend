@@ -23,7 +23,7 @@ export const analyzeText = async (req, res) => {
 
     try {
 
-        // FIX: aceita tanto "text" quanto "question"
+        // FIX: compatibilidade entre frontend antigo e novo
         const text = req.body.text || req.body.question;
 
         if (!text) {
