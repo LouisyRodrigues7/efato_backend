@@ -23,7 +23,8 @@ export const analyzeText = async (req, res) => {
 
     try {
 
-        const { text } = req.body;
+        // FIX: aceita tanto "text" quanto "question"
+        const text = req.body.text || req.body.question;
 
         if (!text) {
 
