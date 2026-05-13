@@ -1,3 +1,18 @@
+/*
+=========================================================
+deduplicator.service.js
+=========================================================
+
+Responsável por remover documentos repetidos
+ou extremamente parecidos.
+
+Objetivos:
+- Reduzir redundância
+- Melhorar diversidade de fontes
+- Evitar contexto duplicado
+
+=========================================================
+*/
 export const deduplicateDocuments = (docs) => {
 
     const map = new Map();

@@ -1,5 +1,23 @@
-import { runPipeline } from "../core/pipeline.orchestrator.js";
-import { extractEntities } from "../services/old-entity.service.js";
+/*
+=========================================================
+analyze.controller.js
+=========================================================
+
+Controller responsável por receber as requisições HTTP
+vindas do frontend.
+
+Funções principais:
+- Receber pergunta do usuário
+- Validar entrada básica
+- Chamar pipeline principal
+- Retornar resposta JSON ao frontend
+
+Fluxo:
+Frontend -> Controller -> Pipeline
+
+=========================================================
+*/
+import { runRagPipeline } from "../core/pipeline.orchestrator.js";
 
 export const analyzeText = async (req, res) => {
 
@@ -8,18 +26,19 @@ export const analyzeText = async (req, res) => {
         const { text } = req.body;
 
         if (!text) {
+
             return res.status(400).json({
                 error: "text is required"
             });
         }
 
-        const entities = await extractEntities(text);
-
-        const result = await runPipeline(text, entities);
+        const result = await runRagPipeline(text);
 
         return res.json(result);
 
     } catch (error) {
+
+        console.error("Pipeline error:", error);
 
         return res.status(500).json({
             error: "Pipeline failure",

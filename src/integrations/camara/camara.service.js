@@ -1,3 +1,20 @@
+/*
+=========================================================
+camara.service.js
+=========================================================
+
+Serviço de integração com APIs da Câmara dos Deputados.
+
+Responsável por:
+- Buscar projetos de lei
+- Buscar deputados
+- Consultar documentos oficiais
+- Recuperar votações e discursos
+
+Fonte oficial governamental.
+
+=========================================================
+*/
 import axios from "axios";
 
 const BASE_URL =

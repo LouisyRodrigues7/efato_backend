@@ -1,3 +1,23 @@
+/*
+=========================================================
+news.service.js
+=========================================================
+
+Serviço de integração com APIs de notícias.
+
+Responsável por:
+- Buscar notícias recentes
+- Recuperar contexto jornalístico
+- Obter informações em tempo real
+
+Utilizado para:
+- política
+- economia
+- fake news
+- eventos atuais
+
+=========================================================
+*/
 import axios from "axios";
 import dotenv from "dotenv";
 

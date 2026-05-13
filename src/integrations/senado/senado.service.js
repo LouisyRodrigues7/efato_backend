@@ -1,3 +1,19 @@
+/*
+=========================================================
+senado.service.js
+=========================================================
+
+Serviço de integração com APIs do Senado Federal.
+
+Responsável por:
+- Buscar projetos legislativos
+- Consultar pronunciamentos
+- Recuperar documentos oficiais
+
+Complementa os dados da Câmara.
+
+=========================================================
+*/
 import axios from "axios";
 
 const BASE_URL =

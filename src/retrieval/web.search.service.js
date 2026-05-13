@@ -1,6 +1,25 @@
-import TavilyClient from "@tavily/core";
+/*
+=========================================================
+web.search.service.js
+=========================================================
 
-const client = new TavilyClient({
+Serviço de busca web complementar.
+
+Responsável por:
+- Buscar páginas públicas
+- Recuperar contexto adicional
+- Complementar notícias e fontes oficiais
+
+Pode utilizar:
+- Tavily
+- Search APIs
+- motores de busca
+
+=========================================================
+*/
+import { tavily } from "@tavily/core";
+
+const client = tavily({
     apiKey: process.env.TAVILY_API_KEY
 });
 
@@ -8,21 +27,54 @@ export const searchWeb = async (query) => {
 
     try {
 
-        const res = await client.search({
-            query,
+        console.log("\n[TAVILY SEARCH]");
+        console.log(query);
+
+        const response = await client.search(query, {
             search_depth: "advanced",
             max_results: 5
         });
 
-        return res.results.map(r => ({
+        console.log("\n[TAVILY RAW]");
+        console.log(response);
+
+        if (!response.results) {
+            return [];
+        }
+
+        return response.results.map(item => ({
+
             tipo: "web",
-            titulo: r.title,
-            texto: r.content,
-            url: r.url,
-            data: r.published_date
+
+            fonte: item.url || "web",
+
+            titulo: item.title || "",
+
+            texto:
+                item.content ||
+                item.snippet ||
+                "",
+
+            url: item.url || "",
+
+            data:
+                item.published_date ||
+                null,
+
+            score:
+                item.score || 0,
+
+            metadata: item
         }));
 
-    } catch {
+    } catch (error) {
+
+        console.error(
+            "\n[TAVILY ERROR]"
+        );
+
+        console.error(error);
+
         return [];
     }
 };

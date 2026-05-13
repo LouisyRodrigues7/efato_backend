@@ -1,3 +1,21 @@
+/*
+=========================================================
+temporal.scorer.js
+=========================================================
+
+Responsável por aplicar score temporal
+aos documentos.
+
+Documentos recentes recebem maior peso.
+
+Importante para:
+- notícias
+- política
+- economia
+- legislação
+
+=========================================================
+*/
 import { differenceInDays } from "date-fns";
 
 export const applyRecencyScore = (docs) => {

@@ -1,3 +1,18 @@
+/*
+=========================================================
+list-models.js
+=========================================================
+
+Script utilitário para listar modelos
+disponíveis da API Gemini.
+
+Utilizado para:
+- debug
+- testes
+- validação de modelos
+
+=========================================================
+*/
 import axios from "axios";
 import dotenv from "dotenv";
 

@@ -1,3 +1,21 @@
+/*
+=========================================================
+server.js
+=========================================================
+
+Arquivo principal do backend Express.
+
+Responsável por:
+- Inicializar servidor
+- Configurar middlewares
+- Habilitar CORS
+- Registrar rotas
+- Definir porta da aplicação
+
+Ponto de entrada do sistema.
+
+=========================================================
+*/
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";

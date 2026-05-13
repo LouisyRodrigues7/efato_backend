@@ -1,7 +1,24 @@
-/**
- * Query Expander - camada semântica do RAG
- * Responsável por transformar a pergunta em múltiplas queries de busca
- */
+/*
+=========================================================
+query.expander.js
+=========================================================
+
+Responsável por expandir a pergunta original
+em múltiplas queries de busca.
+
+Objetivo:
+Melhorar recuperação de documentos.
+
+Exemplo:
+"o governo aumentou imposto?"
+
+Expansões:
+- imposto importação Brasil
+- aumento tributário governo
+- imposto Receita Federal
+
+=========================================================
+*/
 
 export const expandQuery = (text, entities = {}) => {
 

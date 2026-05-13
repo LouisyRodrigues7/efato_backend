@@ -1,45 +1,107 @@
-import { callGemini } from "../llm/gemini.client.js";
+/*
+=========================================================
+intent.classifier.js
+=========================================================
 
+Responsável por detectar a intenção da pergunta.
+
+Exemplos:
+- taxation_change
+- fake_news
+- political_event
+- economic_policy
+
+A intenção influencia:
+- fontes utilizadas
+- estratégia de retrieval
+- comportamento da pipeline
+
+=========================================================
+*/
 export const classifyIntent = async (question) => {
 
-    const prompt = `
-Classifique a intenção da pergunta política/econômica.
+    const text = question.toLowerCase();
 
-Retorne APENAS JSON válido:
-
-{
-  "intent": "",
-  "requiresRealtime": true,
-  "requiresOfficialSource": true,
-  "requiresNews": true
-}
-
-Intents:
-- politician_info
-- voting_history
-- economic_news
-- taxation_change
-- law_status
-- corruption_case
-- executive_action
-- international_trade
-- fake_news_check
-
-Pergunta:
-${question}
-`;
-
-    const res = await callGemini(prompt);
-
-    try {
-        return JSON.parse(res.replace(/```json|```/g, "").trim());
-    } catch {
+    //
+    // TAXAÇÃO / IMPOSTOS
+    //
+    if (
+        text.includes("imposto") ||
+        text.includes("taxa") ||
+        text.includes("tribut") ||
+        text.includes("shein") ||
+        text.includes("aliexpress") ||
+        text.includes("importação")
+    ) {
 
         return {
-            intent: "unknown",
+            intent: "taxation_change",
             requiresRealtime: true,
             requiresOfficialSource: true,
             requiresNews: true
         };
     }
+
+    //
+    // STF / LEIS
+    //
+    if (
+        text.includes("stf") ||
+        text.includes("supremo") ||
+        text.includes("lei") ||
+        text.includes("projeto")
+    ) {
+
+        return {
+            intent: "law_status",
+            requiresRealtime: true,
+            requiresOfficialSource: true,
+            requiresNews: true
+        };
+    }
+
+    //
+    // VOTAÇÃO
+    //
+    if (
+        text.includes("votou") ||
+        text.includes("votação")
+    ) {
+
+        return {
+            intent: "voting_history",
+            requiresRealtime: false,
+            requiresOfficialSource: true,
+            requiresNews: false
+        };
+    }
+
+    //
+    // POLÍTICO
+    //
+    if (
+        text.includes("deputado") ||
+        text.includes("senador") ||
+        text.includes("presidente") ||
+        text.includes("lula") ||
+        text.includes("bolsonaro")
+    ) {
+
+        return {
+            intent: "politician_info",
+            requiresRealtime: false,
+            requiresOfficialSource: true,
+            requiresNews: true
+        };
+    }
+
+    //
+    // DEFAULT
+    //
+    return {
+        intent: "economic_news",
+        requiresRealtime: true,
+        requiresOfficialSource: false,
+        requiresNews: true
+    };
 };

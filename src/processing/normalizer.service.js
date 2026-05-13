@@ -1,3 +1,23 @@
+/*
+=========================================================
+normalizer.service.js
+=========================================================
+
+Responsável pela normalização textual.
+
+Funções:
+- Remover caracteres desnecessários
+- Padronizar strings
+- Limpar espaços extras
+- Facilitar matching textual
+
+Importante para:
+- filtros
+- deduplicação
+- comparação textual
+
+=========================================================
+*/
 export const normalizeSource = (item) => {
 
     return {
