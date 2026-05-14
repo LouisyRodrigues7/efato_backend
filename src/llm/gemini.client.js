@@ -108,7 +108,7 @@ const buildRequestBody = (
             //
             // evita respostas gigantes
             //
-            maxOutputTokens: 1200
+            maxOutputTokens: 2200
         },
 
         safetySettings: [

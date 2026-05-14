@@ -272,8 +272,48 @@ export const runRagPipeline = async (
 
         try {
 
-            answer =
+            const rawAnswer =
                 await callGemini(prompt);
+
+            //
+            // tenta converter para JSON real
+            //
+            try {
+
+                answer =
+                    JSON.parse(rawAnswer);
+
+                console.log(
+                    "\n[ANSWER JSON PARSED]"
+                );
+
+            } catch (parseError) {
+
+                console.error(
+                    "\n[JSON PARSE ERROR]"
+                );
+
+                console.error(
+                    parseError.message
+                );
+
+                answer = {
+
+                    resumo:
+                        "Falha ao interpretar resposta da IA.",
+
+                    analise:
+                        rawAnswer,
+
+                    confiabilidade: {
+
+                        nivel: "baixa",
+
+                        motivo:
+                            "Resposta retornada em formato inválido."
+                    }
+                };
+            }
 
         } catch (error) {
 
@@ -287,11 +327,19 @@ export const runRagPipeline = async (
 
             answer = {
 
-                erro:
-                    "Gemini unavailable",
+                resumo:
+                    "O sistema de IA não conseguiu gerar uma resposta.",
 
-                detalhe:
-                    error.message
+                analise:
+                    error.message,
+
+                confiabilidade: {
+
+                    nivel: "baixa",
+
+                    motivo:
+                        "Falha na comunicação com o modelo Gemini."
+                }
             };
         }
 
