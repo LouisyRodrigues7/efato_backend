@@ -71,19 +71,92 @@ const POLITICAL_TERMS = [
 ];
 
 //
+// ENTIDADES POLÍTICAS IMPORTANTES
+// melhora perguntas como:
+// "lula falou sobre economia"
+// "bolsonaro foi preso"
+// "haddad anunciou imposto"
+//
+
+const POLITICAL_ENTITIES = [
+
+    //
+    // presidentes
+    //
+    "lula",
+    "bolsonaro",
+    "dilma",
+    "temer",
+    "fhc",
+
+    //
+    // ministros / políticos
+    //
+    "haddad",
+    "alckmin",
+    "moraes",
+    "barroso",
+    "zema",
+    "tarcisio",
+    "tarcisio",
+    "nikolas",
+    "boulos",
+    "ciro",
+    "marina",
+    "tebet",
+
+    //
+    // partidos
+    //
+    "pt",
+    "pl",
+    "psdb",
+    "mdb",
+    "pdt",
+    "psol"
+];
+
+//
 // DETECTA NOMES PRÓPRIOS
 // Ex:
-// "o que lula falou"
-// "quem é haddad"
-// "bolsonaro foi ao stf"
+// "O que Lula falou"
+// "Quem é Haddad"
+// "Bolsonaro foi ao STF"
 //
 
 const containsPoliticalEntity = (
     text
 ) => {
 
+    if (!text) {
+        return false;
+    }
+
     //
-    // palavras iniciando com maiúscula
+    // normaliza
+    //
+    const lower =
+        text.toLowerCase();
+
+    //
+    // MATCH DIRETO
+    // agora aceita:
+    // lula
+    // Lula
+    // LULA
+    //
+    const hasKnownEntity =
+        POLITICAL_ENTITIES.some(entity =>
+            lower.includes(entity)
+        );
+
+    if (hasKnownEntity) {
+        return true;
+    }
+
+    //
+    // fallback:
+    // detecta palavras iniciando com maiúscula
     //
     const matches =
         text.match(
@@ -99,7 +172,11 @@ const containsPoliticalEntity = (
         "Onde",
         "Como",
         "Porque",
-        "Quem"
+        "Quem",
+        "O",
+        "A",
+        "Os",
+        "As"
     ];
 
     const filtered =
@@ -113,6 +190,28 @@ const containsPoliticalEntity = (
 export const classifyIntent = async (
     question
 ) => {
+
+    //
+    // proteção
+    //
+    if (
+        !question ||
+        typeof question !== "string"
+    ) {
+
+        return {
+
+            intent: "out_of_scope",
+
+            isPolitical: false,
+
+            requiresRealtime: false,
+
+            requiresOfficialSource: false,
+
+            requiresNews: false
+        };
+    }
 
     const lower =
         question.toLowerCase();
