@@ -102,6 +102,50 @@ export const runRagPipeline = async (
         console.log(intent);
 
         //
+        // NOVO:
+        // BLOQUEIA PERGUNTAS FORA DO ESCOPO POLÍTICO
+        //
+        if (
+            intent?.intent === "out_of_scope" ||
+            intent?.isPolitical === false
+        ) {
+
+            console.log("\n[OUT OF SCOPE QUESTION BLOCKED]");
+
+            return {
+
+                success: false,
+
+                outOfScope: true,
+
+                question,
+
+                intent,
+
+                answer: {
+
+                    resumo:
+                        "Este sistema é especializado apenas em temas políticos e institucionais brasileiros.",
+
+                    analise:
+                        "A pergunta enviada não foi identificada como relacionada a política, governo, eleições, leis, parlamentares, instituições públicas ou temas políticos associados.",
+
+                    fontes_utilizadas: [],
+
+                    evidencias: [],
+
+                    confiabilidade: {
+
+                        nivel: "alta",
+
+                        motivo:
+                            "A classificação detectou que a pergunta está fora do escopo político do sistema."
+                    }
+                }
+            };
+        }
+
+        //
         // 3. QUERY EXPANSION
         //
         const expanded =
