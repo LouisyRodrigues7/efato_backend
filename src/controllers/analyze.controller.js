@@ -17,33 +17,78 @@ Frontend -> Controller -> Pipeline
 
 =========================================================
 */
-import { runRagPipeline } from "../core/pipeline.orchestrator.js";
 
-export const analyzeText = async (req, res) => {
+import { runRagPipeline }
+from "../core/pipeline.orchestrator.js";
+
+export const analyzeText = async (
+    req,
+    res
+) => {
 
     try {
 
-        // FIX: compatibilidade entre frontend antigo e novo
-        const text = req.body.text || req.body.question;
+        //
+        // DEBUG
+        //
+        console.log("\n[BODY RECEBIDO]");
+        console.log(req.body);
 
-        if (!text) {
+        //
+        // proteção contra body undefined
+        //
+        const body =
+            req.body || {};
+
+        //
+        // compatibilidade frontend
+        //
+        const text =
+            body.text ||
+            body.question;
+
+        //
+        // validação
+        //
+        if (
+            !text ||
+            typeof text !== "string"
+        ) {
 
             return res.status(400).json({
-                error: "text is required"
+
+                success: false,
+
+                error:
+                    "text or question is required"
             });
         }
 
-        const result = await runRagPipeline(text);
+        //
+        // executa pipeline
+        //
+        const result =
+            await runRagPipeline(text);
 
         return res.json(result);
 
     } catch (error) {
 
-        console.error("Pipeline error:", error);
+        console.error(
+            "\n[CONTROLLER ERROR]"
+        );
+
+        console.error(error);
 
         return res.status(500).json({
-            error: "Pipeline failure",
-            detail: error.message
+
+            success: false,
+
+            error:
+                "Pipeline failure",
+
+            detail:
+                error.message
         });
     }
 };

@@ -18,26 +18,160 @@ A intenção influencia:
 
 =========================================================
 */
-export const classifyIntent = async (question) => {
 
-    const text = question.toLowerCase();
+const POLITICAL_TERMS = [
 
     //
-    // TAXAÇÃO / IMPOSTOS
+    // política geral
+    //
+    "política",
+    "governo",
+    "presidente",
+    "senador",
+    "deputado",
+    "prefeito",
+    "governador",
+    "ministro",
+    "vereador",
+
+    //
+    // instituições
+    //
+    "câmara",
+    "senado",
+    "stf",
+    "supremo",
+    "tse",
+    "planalto",
+
+    //
+    // eleições
+    //
+    "eleição",
+    "eleitoral",
+    "urna",
+    "campanha",
+    "votação",
+
+    //
+    // legislação
+    //
+    "lei",
+    "pec",
+    "projeto",
+    "medida provisória",
+
+    //
+    // economia pública
+    //
+    "imposto",
+    "tributo",
+    "taxa",
+    "gasto público"
+];
+
+//
+// DETECTA NOMES PRÓPRIOS
+// Ex:
+// "o que lula falou"
+// "quem é haddad"
+// "bolsonaro foi ao stf"
+//
+
+const containsPoliticalEntity = (
+    text
+) => {
+
+    //
+    // palavras iniciando com maiúscula
+    //
+    const matches =
+        text.match(
+            /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\b/g
+        ) || [];
+
+    //
+    // evita palavras comuns
+    //
+    const blacklist = [
+        "Qual",
+        "Quando",
+        "Onde",
+        "Como",
+        "Porque",
+        "Quem"
+    ];
+
+    const filtered =
+        matches.filter(word =>
+            !blacklist.includes(word)
+        );
+
+    return filtered.length > 0;
+};
+
+export const classifyIntent = async (
+    question
+) => {
+
+    const lower =
+        question.toLowerCase();
+
+    //
+    // DETECÇÃO POR TERMOS
+    //
+    const hasPoliticalTerm =
+        POLITICAL_TERMS.some(term =>
+            lower.includes(term)
+        );
+
+    //
+    // DETECÇÃO POR ENTIDADE
+    //
+    const hasPoliticalEntity =
+        containsPoliticalEntity(question);
+
+    //
+    // FORA DO ESCOPO
     //
     if (
-        text.includes("imposto") ||
-        text.includes("taxa") ||
-        text.includes("tribut") ||
-        text.includes("shein") ||
-        text.includes("aliexpress") ||
-        text.includes("importação")
+        !hasPoliticalTerm &&
+        !hasPoliticalEntity
     ) {
 
         return {
+
+            intent: "out_of_scope",
+
+            isPolitical: false,
+
+            requiresRealtime: false,
+
+            requiresOfficialSource: false,
+
+            requiresNews: false
+        };
+    }
+
+    //
+    // TAXAÇÃO
+    //
+    if (
+        lower.includes("imposto") ||
+        lower.includes("tribut") ||
+        lower.includes("taxa")
+    ) {
+
+        return {
+
             intent: "taxation_change",
+
+            isPolitical: true,
+
             requiresRealtime: true,
+
             requiresOfficialSource: true,
+
             requiresNews: true
         };
     }
@@ -46,16 +180,22 @@ export const classifyIntent = async (question) => {
     // STF / LEIS
     //
     if (
-        text.includes("stf") ||
-        text.includes("supremo") ||
-        text.includes("lei") ||
-        text.includes("projeto")
+        lower.includes("stf") ||
+        lower.includes("supremo") ||
+        lower.includes("lei") ||
+        lower.includes("projeto")
     ) {
 
         return {
+
             intent: "law_status",
+
+            isPolitical: true,
+
             requiresRealtime: true,
+
             requiresOfficialSource: true,
+
             requiresNews: true
         };
     }
@@ -64,44 +204,37 @@ export const classifyIntent = async (question) => {
     // VOTAÇÃO
     //
     if (
-        text.includes("votou") ||
-        text.includes("votação")
+        lower.includes("votou") ||
+        lower.includes("votação")
     ) {
 
         return {
+
             intent: "voting_history",
+
+            isPolitical: true,
+
             requiresRealtime: false,
+
             requiresOfficialSource: true,
+
             requiresNews: false
         };
     }
 
     //
-    // POLÍTICO
-    //
-    if (
-        text.includes("deputado") ||
-        text.includes("senador") ||
-        text.includes("presidente") ||
-        text.includes("lula") ||
-        text.includes("bolsonaro")
-    ) {
-
-        return {
-            intent: "politician_info",
-            requiresRealtime: false,
-            requiresOfficialSource: true,
-            requiresNews: true
-        };
-    }
-
-    //
-    // DEFAULT
+    // DEFAULT POLÍTICO
     //
     return {
-        intent: "economic_news",
+
+        intent: "politician_info",
+
+        isPolitical: true,
+
         requiresRealtime: true,
-        requiresOfficialSource: false,
+
+        requiresOfficialSource: true,
+
         requiresNews: true
     };
 };
