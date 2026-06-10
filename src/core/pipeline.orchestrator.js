@@ -282,7 +282,7 @@ export const runRagPipeline = async (
             await rerankDocuments(
                 question,
                 docs,
-                intent
+                //intent
             );
 
         //
