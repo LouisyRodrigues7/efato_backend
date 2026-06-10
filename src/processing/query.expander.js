@@ -82,6 +82,32 @@ const result = {
             "comércio exterior"
         ],
 
+       
+    legal_status: [
+        "preso",
+        "prisão",
+        "domiciliar",
+        "condenado",
+        "condenação",
+        "solto",
+        "soltura",
+        "investigado",
+        "acusado",
+        "processo",
+        "julgamento",
+        "sentença",
+        "recurso",
+        "habeas corpus"
+    ],
+
+    person_info: [
+        "quem é",
+        "cargo",
+        "mandato",
+        "trajetória",
+        "biografia"
+    ]
+
 
     };
 
@@ -142,6 +168,24 @@ const result = {
             "acordo comercial EUA Brasil"
         ],
 
+        legal_status: [
+        "{entity} preso STF",
+        "{entity} prisão domiciliar",
+        "{entity} condenação STF",
+        "{entity} status jurídico",
+        "{entity} recurso defesa",
+        "{entity} habeas corpus",
+        "{entity} solto quando",
+        "{entity} prazo prisão"
+    ],
+
+    person_info: [
+        "{entity} quem é",
+        "{entity} cargo atual",
+        "{entity} trajetória política",
+        "{entity} biografia"
+    ]
+
     };
 
     const intentExpansions = {
@@ -190,17 +234,6 @@ const result = {
         ]
     },
 
-    fact_check: {
-    current: [
-        "{entity} acusação",
-        "{entity} investigação",
-        "{entity} denúncia",
-        "{entity} esclarecimento",
-        "{entity} nota oficial",
-        "{entity} fato ou boato",
-        "{entity} checagem"
-    ]
-},
 
     statement: {
 
@@ -214,16 +247,6 @@ const result = {
         ]
     },
 
-    public_office: {
-
-    current: [
-        "{entity} cargo atual",
-        "{entity} mandato",
-        "{entity} atualmente",
-        "{entity} função atual",
-        "{entity} posição atual"
-        ]
-    },
 
     government_action: {
 
@@ -268,13 +291,22 @@ const result = {
     }
 };
 
-    // adiciona termos relacionados
-    for (const topic of detectedTopics) {
-        result.relatedTerms.push(...(semanticMap[topic] || []));
-    }
 
     const entity =
     entities?.pessoa || "";
+
+    // adiciona termos relacionados
+  for (const topic of detectedTopics) {
+    const terms = semanticMap[topic] || [];
+
+    const resolved = terms.map(term =>
+        entity
+            ? term.replace("{entity}", entity)
+            : term.replace("{entity} ", "")   // remove placeholder se não há entidade
+    );
+
+    result.relatedTerms.push(...resolved);
+}
 
 if (
     entity &&
@@ -345,18 +377,13 @@ if (
 
     const baseQuery = text;
 
-const variations = [
-
-    baseQuery,
-
-    ...result.relatedTerms,
-
-    ...detectedTopics.map(
-        topic =>
-            `${topic} política brasileira`
-    )
-];
-
+    const variations = [
+        baseQuery,
+        ...result.currentQueries,      
+        ...result.historicalQueries,    
+        ...result.relatedTerms,
+        ...detectedTopics.map(topic => `${topic} política brasileira`)
+    ];
     result.searchQueries = [
 
         ...new Set(

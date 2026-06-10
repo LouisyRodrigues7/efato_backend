@@ -475,7 +475,17 @@ export const runRagPipeline = async (
                 searchQueries:
                     expanded
                         ?.searchQueries
-                        ?.slice(0, 5)
+                        ?.slice(0, 5),
+
+                currentQuerie:
+                    expanded
+                        ?.currentQueries
+                        ?.slice(0,5),
+
+                historicalQuerie:
+                    expanded
+                        ?.historicalQueries
+                        ?.slice(0,5)
             },
 
             stats: {
