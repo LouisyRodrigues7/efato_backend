@@ -45,6 +45,17 @@ const STOPWORDS = [
     "noticias"
 ];
 
+const LEGAL_TERMS = [
+    "preso",
+    "prisao",
+    "condenado",
+    "condenacao",
+    "solto",
+    "soltura",
+    "investigado",
+    "processo"
+];
+
 //
 // NORMALIZA TEXTO
 //
@@ -96,11 +107,41 @@ const extractTerms = (
         );
 };
 
+
+const expandTerms = (terms) => {
+
+    const expanded = new Set(terms);
+
+    if (
+        terms.some(term =>
+            LEGAL_TERMS.includes(term)
+        )
+    ) {
+
+        [
+            "prisao",
+            "condenacao",
+            "condenado",
+            "solto",
+            "soltura",
+            "liberdade",
+            "processo",
+            "tribunal",
+            "stf"
+        ].forEach(term =>
+            expanded.add(term)
+        );
+    }
+
+    return [...expanded];
+};
+
 //
 // CALCULA SCORE
 //
 const calculateScore = (
     terms,
+    title,
     content
 ) => {
 
@@ -108,24 +149,16 @@ const calculateScore = (
 
     for (const term of terms) {
 
-        //
-        // MATCH EXATO
-        //
-        if (content.includes(term)) {
-
-            score += 2;
+        if (
+            title.includes(term)
+        ) {
+            score += 5;
         }
 
-        //
-        // MATCH NO TÍTULO TEM PESO MAIOR
-        //
         if (
-            content
-                .slice(0, 300)
-                .includes(term)
+            content.includes(term)
         ) {
-
-            score += 1;
+            score += 2;
         }
     }
 
@@ -145,7 +178,9 @@ export const filterRelevantDocuments = (
     // TERMOS RELEVANTES
     //
     const terms =
-        extractTerms(question);
+        expandTerms(
+            extractTerms(question)
+        );
 
     console.log("\n[RELEVANCE TERMS]");
     console.log(terms);
@@ -156,19 +191,29 @@ export const filterRelevantDocuments = (
     const scoredDocs =
         docs.map(doc => {
 
-            const content =
-                normalizeText(`
+            const title =
+            normalizeText(
+                doc.titulo || ""
+            );
 
-                    ${doc.titulo || ""}
+        const content =
+            normalizeText(
+                doc.texto || ""
+            );
 
-                    ${doc.texto || ""}
-                `);
+        const score =
+            calculateScore(
+                terms,
+                title,
+                content
+            );
 
-            const score =
-                calculateScore(
-                    terms,
-                    content
-                );
+        console.log(
+        docs.map(doc => ({
+            titulo: doc.titulo,
+            textoSize: doc.texto?.length
+        }))
+    );
 
             return {
 
@@ -182,23 +227,20 @@ export const filterRelevantDocuments = (
     //
     // FILTRA
     //
-    const filtered =
-        scoredDocs
+const filtered =
+    scoredDocs
 
-            //
-            // SCORE MÍNIMO
-            //
-            .filter(doc =>
-                doc.relevanceScore >= 3
-            )
+        .filter(doc =>
+            doc.relevanceScore > 0
+        )
 
-            //
-            // ORDENA
-            //
-            .sort((a, b) =>
+        .sort(
+            (a,b) =>
                 b.relevanceScore -
                 a.relevanceScore
-            );
+        )
+
+        .slice(0, 20);
 
     console.log("\n[RELEVANT DOCS]");
     console.log(filtered.length);

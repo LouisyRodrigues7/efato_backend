@@ -87,7 +87,11 @@ export const rerankDocuments = async (
                 normalize(doc.texto || "");
 
             const source =
-                normalize(doc.source || "");
+                normalize(
+                    doc.fonte || 
+                    doc.source ||
+                    ""
+                );
 
             let score = 0;
 

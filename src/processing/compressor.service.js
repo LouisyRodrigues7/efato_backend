@@ -161,9 +161,11 @@ export const compressContext = (
             .map(doc => {
 
                 const text =
-                    normalizeText(
-                        doc.texto || ""
-                    );
+                normalizeText(
+                    doc.texto ||
+                    doc.titulo ||
+                    ""
+                );
 
                 const smartSummary =
                     buildSmartSummary(
@@ -198,8 +200,7 @@ export const compressContext = (
                 };
             })
             .filter(doc =>
-                doc.resumo &&
-                doc.resumo.length > 50
+                doc.resumo 
             );
 
         //

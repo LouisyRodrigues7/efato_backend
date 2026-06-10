@@ -52,6 +52,8 @@ from "../llm/gemini.client.js";
 import { buildPrompt }
 from "../llm/prompt.engine.js";
 
+import { extractEntities } from "../processing/entity.extractor.js";
+
 //
 // PIPELINE LIMITS
 //
@@ -64,6 +66,40 @@ const LIMITS = {
     MAX_DOCS_AFTER_RERANK: 8,
 
     MAX_CONTEXT_DOCS: 5
+};
+
+const buildDiverseContext = (
+    docs,
+    intent
+) => {
+
+    if (
+        !intent?.requiresCurrentStatus
+    ) {
+        return docs;
+    }
+
+    const currentDocs =
+        docs.filter(
+            doc =>
+                doc.temporalType ===
+                "current"
+        );
+
+    const historicalDocs =
+        docs.filter(
+            doc =>
+                doc.temporalType ===
+                "historical"
+        );
+
+    return [
+
+        ...currentDocs.slice(0, 3),
+
+        ...historicalDocs.slice(0, 3)
+
+    ];
 };
 
 export const runRagPipeline = async (
@@ -145,11 +181,16 @@ export const runRagPipeline = async (
             };
         }
 
+        const entities =
+        extractEntities(question);
+        console.log("\n[ENTITIES]");
+        console.log(entities);
+
         //
         // 3. QUERY EXPANSION
         //
         const expanded =
-            expandQuery(question);
+            expandQuery(question, entities, intent);
 
         console.log("\n[QUERY EXPANSION]");
         console.log({
@@ -187,10 +228,6 @@ export const runRagPipeline = async (
         //
         // LIMIT INITIAL RETRIEVAL
         //
-        docs = docs.slice(
-            0,
-            LIMITS.MAX_DOCS_AFTER_RETRIEVAL
-        );
 
         console.log("\n[RAW RETRIEVED DOCS]");
         console.log(docs.length);
@@ -244,7 +281,8 @@ export const runRagPipeline = async (
         docs =
             await rerankDocuments(
                 question,
-                docs
+                docs,
+                intent
             );
 
         //
@@ -270,6 +308,12 @@ export const runRagPipeline = async (
         docs.sort((a, b) =>
             (b.score || 0) -
             (a.score || 0)
+        );
+
+        docs =
+        buildDiverseContext(
+            docs,
+            intent
         );
 
         console.log("\n[TOP DOCUMENT]");
@@ -416,6 +460,8 @@ export const runRagPipeline = async (
             },
 
             question,
+
+            entities,
 
             intent,
 

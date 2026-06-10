@@ -26,6 +26,8 @@ Parte crítica do RAG.
 =========================================================
 */
 
+const today = new Date().toISOString().split("T")[0];
+
 export const buildPrompt = ({
     question,
     entities = [],
@@ -137,6 +139,12 @@ Prefira respostas humanas e contextualizadas.
 - e depois explique o motivo.
 
 18. Prefira respostas informativas e contextualizadas.
+
+19. Sempre considere a data de publicação.
+
+20. Ao responder, considere que documentos antigos descrevem apenas a situação da época em que foram publicados.
+
+21. Não assuma que uma condição, cargo ou situação jurídica mencionada em um documento antigo permanece válida atualmente.
 
 =========================================================
 INTENÇÃO DETECTADA

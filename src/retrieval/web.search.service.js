@@ -36,7 +36,13 @@ export const searchWeb = async (query) => {
         });
 
         console.log("\n[TAVILY RAW]");
-        console.log(response);
+       /* console.log(
+        response.results.map(r => ({
+            title: r.title,
+            contentSize:
+                r.content?.length || 0
+        }))
+        );*/
 
         if (!response.results) {
             return [];

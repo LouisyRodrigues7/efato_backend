@@ -20,18 +20,21 @@ Expansões:
 =========================================================
 */
 
-export const expandQuery = (text, entities = {}) => {
+export const expandQuery = (text, entities, intent = {}) => {
 
     const normalized = text
         .toLowerCase()
         .trim();
 
-    const result = {
-        keywords: [],
-        relatedTerms: [],
-        topics: [],
-        searchQueries: []
-    };
+const result = {
+    keywords: [],
+    relatedTerms: [],
+    topics: [],
+    searchQueries: [],
+
+    historicalQueries: [],
+    currentQueries: []
+};
 
     // -------------------------
     // 1. DETECÇÃO DE PADRÕES
@@ -77,7 +80,9 @@ export const expandQuery = (text, entities = {}) => {
             "china",
             "eua",
             "comércio exterior"
-        ]
+        ],
+
+
     };
 
     // -------------------------
@@ -135,21 +140,188 @@ export const expandQuery = (text, entities = {}) => {
             "balança comercial Brasil",
             "tarifas internacionais Brasil",
             "acordo comercial EUA Brasil"
-        ]
+        ],
+
     };
+
+    const intentExpansions = {
+
+    legal_status: {
+
+        historical: [
+            "{entity} prisão",
+            "{entity} condenação",
+            "{entity} soltura"
+        ],
+
+        current: [
+            "{entity} atualmente",
+            "{entity} cargo atual",
+            "{entity} presidente",
+            "{entity} governo",
+            "{entity} situação atual"
+        ]
+    },
+
+    public_office: {
+        historical: [
+            "{entity} senador",
+            "{entity} deputado",
+            "{entity} ministro",
+            "{entity} cargos públicos",
+            "{entity} trajetória política"
+        ],
+
+        current: [
+            "{entity} cargo atual",
+            "{entity} mandato atual",
+            "{entity} atualmente"
+        ]
+},
+
+    election: {
+        historical: [
+            "{entity} eleição",
+            "{entity} resultado eleitoral"
+        ],
+
+        current: [
+            "{entity} votação"
+        ]
+    },
+
+    fact_check: {
+    current: [
+        "{entity} acusação",
+        "{entity} investigação",
+        "{entity} denúncia",
+        "{entity} esclarecimento",
+        "{entity} nota oficial",
+        "{entity} fato ou boato",
+        "{entity} checagem"
+    ]
+},
+
+    statement: {
+
+        current: [
+            "{entity} declarou",
+            "{entity} afirmou",
+            "{entity} entrevista",
+            "{entity} discurso",
+            "{entity} pronunciamento",
+            "{entity} falou sobre"
+        ]
+    },
+
+    public_office: {
+
+    current: [
+        "{entity} cargo atual",
+        "{entity} mandato",
+        "{entity} atualmente",
+        "{entity} função atual",
+        "{entity} posição atual"
+        ]
+    },
+
+    government_action: {
+
+    current: [
+        "medida do governo",
+        "anúncio governo federal",
+        "programa governo",
+        "decreto governo",
+        "ação governo",
+        "anúncio"
+    ]
+},
+
+    fact_check: {
+
+    current: [
+
+        "{entity} acusação",
+
+        "{entity} investigação",
+
+        "{entity} denúncia",
+
+        "{entity} checagem",
+
+        "{entity} nota oficial",
+
+        "{entity} esclarecimento",
+
+        "{entity} fato ou boato",
+
+        "{entity} é verdade",
+
+        "{entity} nota oficial",
+
+        "{entity} defesa",
+
+        "{entity} resposta",
+
+        "{entity} esclarecimento"
+        ]
+    }
+};
 
     // adiciona termos relacionados
     for (const topic of detectedTopics) {
         result.relatedTerms.push(...(semanticMap[topic] || []));
     }
 
+    const entity =
+    entities?.pessoa || "";
+
+if (
+    entity &&
+    intent?.topic &&
+    intentExpansions[intent.topic]
+) {
+
+    const expansion =
+        intentExpansions[intent.topic];
+
+    if (expansion.historical) {
+
+        result.historicalQueries.push(
+
+            ...expansion.historical.map(
+                term =>
+                    term.replace(
+                        "{entity}",
+                        entity
+                    )
+            )
+        );
+    }
+
+    if (expansion.current) {
+
+        result.currentQueries.push(
+
+            ...expansion.current.map(
+                term =>
+                    term.replace(
+                        "{entity}",
+                        entity
+                    )
+            )
+        );
+    }
+}
+
     // -------------------------
     // 4. KEYWORDS BASE
     // -------------------------
 
     const baseWords = normalized
-        .split(" ")
-        .filter(w => w.length > 3);
+        .replace(/[^\w\sÀ-ÿ]/g, "")
+        .split(/\s+/)
+        .filter(word => word.length > 2);
 
     result.keywords.push(...baseWords);
 
@@ -158,7 +330,9 @@ export const expandQuery = (text, entities = {}) => {
     // -------------------------
 
     if (entities?.pessoa) {
-        result.relatedTerms.push(entities.pessoa);
+        result.relatedTerms.push(
+            entities.pessoa
+        );
     }
 
     if (entities?.tema) {
@@ -171,17 +345,55 @@ export const expandQuery = (text, entities = {}) => {
 
     const baseQuery = text;
 
-    const variations = [
-        `${baseQuery} Brasil`,
-        `${baseQuery} governo`,
-        `${baseQuery} notícia`,
-        `${baseQuery} atual`,
-        ...result.relatedTerms.slice(0, 5).map(t => `${t} Brasil`),
-        ...detectedTopics.map(t => `${t} Brasil política`)
-    ];
+const variations = [
 
-    // remove duplicados
-    result.searchQueries = [...new Set(variations)];
+    baseQuery,
+
+    ...result.relatedTerms,
+
+    ...detectedTopics.map(
+        topic =>
+            `${topic} política brasileira`
+    )
+];
+
+    result.searchQueries = [
+
+        ...new Set(
+            variations
+                .map(q => q.trim())
+                .filter(Boolean)
+        )
+
+    ].slice(0, 20);
+
+    result.historicalQueries = [
+
+        ...new Set(
+            result.historicalQueries
+                .map(q => q.trim())
+                .filter(Boolean)
+        )
+
+    ].slice(0, 10);
+
+    result.currentQueries = [
+
+        ...new Set(
+            result.currentQueries
+                .map(q => q.trim())
+                .filter(Boolean)
+        )
+
+    ].slice(0, 10);
 
     return result;
+
+    console.log(
+    JSON.stringify(
+        result,
+        null,
+        2
+    )
+);
 };
