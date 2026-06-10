@@ -93,11 +93,21 @@ const buildDiverseContext = (
                 "historical"
         );
 
+    const defaultDocs =
+        docs.filter(
+            doc =>
+                !doc.temporalType ||
+                doc.temporalType ===
+                "default"
+        );
+
     return [
 
-        ...currentDocs.slice(0, 3),
+        ...historicalDocs.slice(0, 3),
 
-        ...historicalDocs.slice(0, 3)
+        ...currentDocs.slice(0, 2),
+
+        ...defaultDocs.slice(0, 2)
 
     ];
 };
