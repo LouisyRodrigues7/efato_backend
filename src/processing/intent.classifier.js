@@ -19,6 +19,22 @@ A intenção influencia:
 =========================================================
 */
 
+const FACT_CHECK_TERMS = [
+
+    "é verdade",
+    "verdade que",
+    "é falso",
+    "falso que",
+    "boato",
+    "fake",
+    "fake news",
+    "mentira",
+    "isso aconteceu",
+    "procede",
+    "confere",
+    "é real"
+];
+
 const POLITICAL_TERMS = [
 
     //
@@ -78,7 +94,7 @@ const POLITICAL_TERMS = [
 // "haddad anunciou imposto"
 //
 
-const POLITICAL_ENTITIES = [
+export const POLITICAL_ENTITIES = [
 
     //
     // presidentes
@@ -90,7 +106,7 @@ const POLITICAL_ENTITIES = [
     "fhc",
 
     //
-    // ministros / políticos
+    // ministros / políticos 
     //
     "haddad",
     "alckmin",
@@ -104,6 +120,7 @@ const POLITICAL_ENTITIES = [
     "ciro",
     "marina",
     "tebet",
+    "flavio bolsonaro",
 
     //
     // partidos
@@ -179,7 +196,7 @@ const containsPoliticalEntity = (
         "As"
     ];
 
-    const filtered =
+        const filtered =
         matches.filter(word =>
             !blacklist.includes(word)
         );
@@ -187,6 +204,7 @@ const containsPoliticalEntity = (
     return filtered.length > 0;
 };
 
+ 
 export const classifyIntent = async (
     question
 ) => {
@@ -215,6 +233,11 @@ export const classifyIntent = async (
 
     const lower =
         question.toLowerCase();
+
+    const isFactCheck =
+    FACT_CHECK_TERMS.some(term =>
+        lower.includes(term)
+    );
 
     //
     // DETECÇÃO POR TERMOS
@@ -275,6 +298,40 @@ export const classifyIntent = async (
         };
     }
 
+    // FACT-CHECK
+     if (isFactCheck) {
+
+        return {
+
+            intent: "fact_check",
+            topic: "fact_check",
+            isPolitical: true,
+            requiresRealtime: true,
+            requiresOfficialSource: true,
+            requiresNews: true
+        };
+    }
+
+    // CARGO PÚBLICO
+    if (
+        lower.includes("cargo") ||
+        lower.includes("mandato") ||
+        lower.includes("presidente") ||
+        lower.includes("senador") ||
+        lower.includes("deputado")
+    ) {
+
+        return {
+
+            intent: "public_office",
+            topic: "public_office",
+            isPolitical: true,
+            requiresRealtime: false,
+            requiresOfficialSource: true,
+            requiresNews: true
+        };
+    }
+
     //
     // STF / LEIS
     //
@@ -321,6 +378,63 @@ export const classifyIntent = async (
         };
     }
 
+    // STATUS
+    if (
+        lower.includes("preso") ||
+        lower.includes("prisão") ||
+        lower.includes("solto") ||
+        lower.includes("soltura") ||
+        lower.includes("condenado") ||
+        lower.includes("condenação") ||
+        lower.includes("investigado") ||
+        lower.includes("acusado") ||
+        lower.includes("processo")
+        ) {
+        return {
+            intent: "person_status",
+            topic: "legal_status",
+            requiresRealtime: true,
+            isPolitical: true,
+            requiresOfficialSource: true,
+            requiresNews: true,
+            requiresCurrentStatus: true,
+            
+        }
+    }       
+
+
+    // DISCURSO
+    if (
+        lower.includes("falou") ||
+        lower.includes("disse") ||
+        lower.includes("afirmou") ||
+        lower.includes("declarou") ||
+        lower.includes("anunciou")
+    ) {
+    return  {
+        intent: "political_statement",
+        topic: "statement",
+        requiresRealtime: true,
+        requiresNews: true
+        }
+    }
+
+    // AÇÃO GOVERNAMENTAL
+    if (
+        lower.includes("anunciou") ||
+        lower.includes("criou") ||
+        lower.includes("lançou") ||
+        lower.includes("programa") ||
+        lower.includes("decreto")
+    ) {
+        return {
+        intent: "government_action",
+        topic: "government_action",
+        requiresRealtime: true,
+        requiresNews: true
+    }
+}
+
     //
     // DEFAULT POLÍTICO
     //
@@ -334,6 +448,9 @@ export const classifyIntent = async (
 
         requiresOfficialSource: true,
 
-        requiresNews: true
+        requiresNews: true,
+
+        requiresNews: true,
+    
     };
 };

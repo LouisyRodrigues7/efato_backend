@@ -68,15 +68,17 @@ const sanitizeQueries = (
 //
 const normalizeDocs = (
     docs = [],
-    tipo = "web"
+    tipo = "web",
+    temporalType = "default"
 ) => {
 
     return docs
         .filter(Boolean)
-
         .map(doc => ({
 
             tipo,
+
+            temporalType,
 
             titulo:
                 doc.titulo ||
@@ -110,10 +112,6 @@ const normalizeDocs = (
             metadata:
                 doc.metadata || {}
         }))
-
-        //
-        // REMOVE DOCS SEM CONTEÚDO
-        //
         .filter(doc =>
             doc.texto ||
             doc.titulo
@@ -127,17 +125,42 @@ export const multiRetrieve = async (
 
     try {
 
+
         //
         // QUERIES FINAIS
         //
-        const queries =
+
+        const defaultQueries =
+        sanitizeQueries(
+            expanded.searchQueries || []
+        );
+
+        const useDualRetrieval =
+        intent?.requiresCurrentStatus === true;
+
+        const queries = useDualRetrieval
+        ? []
+        : defaultQueries;
+
+    
+        const historicalQueries =
             sanitizeQueries(
-                expanded.searchQueries || []
+                expanded.historicalQueries || []
             );
 
-        console.log("\n[MULTI RETRIEVE]");
-        console.log(queries);
+        const currentQueries =
+            sanitizeQueries(
+                expanded.currentQueries || []
+        );
 
+    
+        console.log({
+        useDualRetrieval,
+        historicalQueries,
+        currentQueries,
+        defaultQueries
+    });
+     
         //
         // CONTROLE DE BUSCA POR INTENT
         //
@@ -146,10 +169,38 @@ export const multiRetrieve = async (
 
         const shouldSearchWeb =
             true;
-
+        
         //
         // TASKS
         //
+
+            const historicalNewsTasks =
+            useDualRetrieval && shouldSearchNews
+                ? historicalQueries.map(query =>
+                    searchNews(query)
+                )
+                : [];
+
+        const historicalWebTasks =
+        useDualRetrieval
+            ? historicalQueries.map(query =>
+                searchWeb(query)
+            )
+            : [];
+
+        const currentNewsTasks =
+        useDualRetrieval && shouldSearchNews
+            ? currentQueries.map(query =>
+                searchNews(query)
+            )
+            : [];
+
+        const currentWebTasks =
+            useDualRetrieval
+                ? currentQueries.map(query =>
+                    searchWeb(query)
+                )
+                : [];
         const newsTasks =
             shouldSearchNews
                 ? queries.map(query =>
@@ -169,12 +220,24 @@ export const multiRetrieve = async (
         //
         const [
             newsResults,
-            webResults
+            webResults,
+
+            historicalNewsResults,
+            historicalWebResults,
+
+            currentNewsResults,
+            currentWebResults
+
         ] = await Promise.all([
 
             Promise.all(newsTasks),
+            Promise.all(webTasks),
 
-            Promise.all(webTasks)
+            Promise.all(historicalNewsTasks),
+            Promise.all(historicalWebTasks),
+
+            Promise.all(currentNewsTasks),
+            Promise.all(currentWebTasks)
         ]);
 
         //
@@ -189,21 +252,61 @@ export const multiRetrieve = async (
         //
         // NORMALIZAÇÃO
         //
-        let news =
-            normalizeDocs(
-                rawNews,
-                "news"
-            );
 
-        let web =
-            normalizeDocs(
-                rawWeb,
-                "web"
-            );
+        const rawHistoricalNews =
+        historicalNewsResults.flat();
+
+        const rawHistoricalWeb =
+            historicalWebResults.flat();
+
+        const rawCurrentNews =
+            currentNewsResults.flat();
+
+        const rawCurrentWeb =
+            currentWebResults.flat();
 
         //
         // LIMITES POR FONTE
         //
+        let news = [
+        ...normalizeDocs(
+            rawNews,
+            "news"
+        ),
+
+        ...normalizeDocs(
+            rawHistoricalNews,
+            "news",
+            "historical"
+        ),
+
+        ...normalizeDocs(
+            rawCurrentNews,
+            "news",
+            "current"
+        )
+    ];
+
+    let web = [
+        ...normalizeDocs(
+            rawWeb,
+            "web"
+        ),
+
+        ...normalizeDocs(
+            rawHistoricalWeb,
+            "web",
+            "historical"
+        ),
+
+        ...normalizeDocs(
+            rawCurrentWeb,
+            "web",
+            "current"
+        )
+    ];
+
+
         news = news.slice(
             0,
             LIMITS.MAX_RESULTS_PER_SOURCE
@@ -214,25 +317,14 @@ export const multiRetrieve = async (
             LIMITS.MAX_RESULTS_PER_SOURCE
         );
 
-        console.log("\n[NEWS RESULTS]");
+        console.log("\n[NEWS DOCS]");
         console.log(news.length);
 
-        console.log("\n[WEB RESULTS]");
+        console.log("\n[WEB DOCS]");
         console.log(web.length);
 
-        //
-        // DEBUG CONTROLADO
-        //
-        console.log("\n[SAMPLE NEWS]");
-        console.log(
-            news?.[0]?.titulo || "none"
-        );
-
-        console.log("\n[SAMPLE WEB]");
-        console.log(
-            web?.[0]?.titulo || "none"
-        );
-
+        
+       
         return {
 
             news,
